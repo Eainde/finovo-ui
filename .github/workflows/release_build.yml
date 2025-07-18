@@ -3,44 +3,43 @@ name: Build & Push Docker Image to GCP Artifact Registry
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch:   # optional: allows manual runs from the Actions tab
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Authenticate to GCP
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/auth@v1
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
       - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+        uses: google-github-actions/artifact-registry-auth@v1
+        with:
+          location: ${{ secrets.GCP_REGION }}
+          repository: ${{ secrets.GCP_ARTIFACT_REPOSITORY }}
+          format: docker
 
       - name: Build & Push Docker Image
         run: |
-          # Define variables
           REGISTRY=${{ secrets.GCP_REGION }}-docker.pkg.dev
           PROJECT=${{ secrets.GCP_PROJECT_ID }}
           REPO=${{ secrets.GCP_ARTIFACT_REPOSITORY }}
-          IMAGE_NAME=gig-finance-app
-
-          # Full image references
-          SHA_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE_NAME:${{ github.sha }}
-          LATEST_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE_NAME:latest
-
+          IMAGE=finovo-ui
+          
+          SHA_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE:${{ github.sha }}
+          LATEST_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE:latest
+          
           echo "Building $SHA_TAG"
           docker build -t $SHA_TAG .
-
+          
           echo "Pushing $SHA_TAG"
           docker push $SHA_TAG
-
+          
           echo "Tagging and pushing $LATEST_TAG"
           docker tag $SHA_TAG $LATEST_TAG
           docker push $LATEST_TAG
