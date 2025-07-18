@@ -30,6 +30,9 @@ jobs:
           REGION="${{ secrets.GCP_REGION }}-docker.pkg.dev"
           gcloud auth configure-docker $REGION
 
+      - name: Show Docker config
+        run: cat ~/.docker/config.json
+
       # 4. Build & push your image
       - name: Build & Push Docker Image
         run: |
