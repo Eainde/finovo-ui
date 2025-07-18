@@ -3,6 +3,8 @@ name: Build & Push Docker Image to GCP Artifact Registry
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -10,19 +12,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout your code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Authenticate to GCP
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - name: Configure Docker for Artifact Registry
+      # 2. Write the service account JSON key to disk
+      - name: Write GCP key file
         run: |
-          gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+          echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > sa.json
 
+      # 3. Install the Cloud SDK so we have `gcloud`
+      - name: Install gcloud SDK
+        uses: google-github-actions/install-gcloud@v1
+        with:
+          version: 'latest'
+
+
+      # 4. Authenticate and set project
+      - name: Authenticate to GCP
+        run: |
+          gcloud auth activate-service-account --key-file=sa.json
+          gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
+
+      # 5. Obtain an access token and do a Docker login
+      - name: Docker login to Artifact Registry
+        run: |
+          REGION="${{ secrets.GCP_REGION }}-docker.pkg.dev"
+          TOKEN=$(gcloud auth print-access-token)
+          echo "$TOKEN" | docker login -u oauth2accesstoken --password-stdin "https://$REGION"
+
+      # 6. Build & push your image
       - name: Build & Push Docker Image
         run: |
           # Define variables
