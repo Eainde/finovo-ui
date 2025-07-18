@@ -24,12 +24,13 @@ jobs:
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           export_default_credentials: true  # makes gcloud auth available to gcloud commands
 
-      # 5. Obtain an access token and do a Docker login
-      - name: Docker login to Artifact Registry
-        run: |
-          REGION="${{ secrets.GCP_REGION }}-docker.pkg.dev"
-          TOKEN=$(gcloud auth print-access-token)
-          echo "$TOKEN" | docker login -u oauth2accesstoken --password-stdin "https://$REGION"
+      # 2. Setup Docker authentication for Artifact Registry
+      - name: Configure Docker for Artifact Registry
+        uses: google-github-actions/artifact-registry-auth@v1
+        with:
+          location: ${{ secrets.GCP_REGION }}
+          repository: ${{ secrets.GCP_ARTIFACT_REPOSITORY }}
+          format: docker
 
       # 6. Build & push your image
       - name: Build & Push Docker Image
