@@ -16,14 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-
-      # 2. Write the service account JSON key to disk
-      - name: Write GCP key file
-        run: |
-          cat <<EOF > sa.json
-      ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-      EOF
-
       # 3. Install & authenticate gcloud
       - name: Setup gcloud SDK & authenticate
         uses: google-github-actions/setup-gcloud@v2
