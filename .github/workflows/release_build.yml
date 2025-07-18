@@ -1,31 +1,41 @@
-name: Build and Push Docker Image to GCP Artifact Registry
+name: Build & Push Docker Image to GCP Artifact Registry
 
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:   # optional: allows manual runs from the Actions tab
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Google Cloud SDK
+      - name: Authenticate to GCP
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - name: Configure Docker for Artifact Registry
+      - name: Configure Docker credential helper
         run: |
           gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
 
-      - name: Build Docker Image
+      - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPOSITORY }}/finovo-ui:latest .
+          IMAGE=$GCP_REGISTRY/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPOSITORY }}/finovo-ui
+          TAG_SHA=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPOSITORY }}/finovo-ui:${{ github.sha }}
+          docker build -t $TAG_SHA .
+          echo "::set-output name=image::$TAG_SHA"
 
-      - name: Push Docker Image
+      - name: Push image with SHA tag
         run: |
-          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPOSITORY }}/finovo-ui:latest
+          docker push ${{ steps.build-and-push.outputs.image }}
+
+      - name: Tag & push latest
+        run: |
+          IMAGE_SHA=${{ steps.build-and-push.outputs.image }}
+          IMAGE_LATEST=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPOSITORY }}/finovo-ui:latest
+          docker tag $IMAGE_SHA $IMAGE_LATEST
+          docker push $IMAGE_LATEST
