@@ -24,20 +24,14 @@ jobs:
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           export_default_credentials: true
 
-      # 3. Setup Docker authentication for Artifact Registry
-      - name: Authenticate and Docker login to Artifact Registry
-        run: |
-          REGION="${{ secrets.GCP_REGION }}-docker.pkg.dev"
-          gcloud auth configure-docker $REGION
-
-      - name: Show Docker config
-        run: cat ~/.docker/config.json
 
       # 4. Build & push your image
       - name: Build & Push Docker Image
         run: |
           # Define variables
           REGISTRY=${{ secrets.GCP_REGION }}-docker.pkg.dev
+          gcloud auth configure-docker $REGION
+          
           PROJECT=${{ secrets.GCP_PROJECT_ID }}
           REPO=${{ secrets.GCP_ARTIFACT_REPOSITORY }}
           IMAGE_NAME=finovo-ui
