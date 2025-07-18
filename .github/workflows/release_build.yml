@@ -3,11 +3,12 @@ name: Build & Push Docker Image to GCP Artifact Registry
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:   # optional: allows manual runs from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,24 +19,28 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - name: Configure Docker credential helper
+      - name: Configure Docker for Artifact Registry
         run: |
           gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
 
-      - name: Build Docker image
+      - name: Build & Push Docker Image
         run: |
-          IMAGE=$GCP_REGISTRY/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPOSITORY }}/finovo-ui
-          TAG_SHA=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPOSITORY }}/finovo-ui:${{ github.sha }}
-          docker build -t $TAG_SHA .
-          echo "::set-output name=image::$TAG_SHA"
+          # Define variables
+          REGISTRY=${{ secrets.GCP_REGION }}-docker.pkg.dev
+          PROJECT=${{ secrets.GCP_PROJECT_ID }}
+          REPO=${{ secrets.GCP_ARTIFACT_REPOSITORY }}
+          IMAGE_NAME=gig-finance-app
 
-      - name: Push image with SHA tag
-        run: |
-          docker push ${{ steps.build-and-push.outputs.image }}
+          # Full image references
+          SHA_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE_NAME:${{ github.sha }}
+          LATEST_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE_NAME:latest
 
-      - name: Tag & push latest
-        run: |
-          IMAGE_SHA=${{ steps.build-and-push.outputs.image }}
-          IMAGE_LATEST=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPOSITORY }}/finovo-ui:latest
-          docker tag $IMAGE_SHA $IMAGE_LATEST
-          docker push $IMAGE_LATEST
+          echo "Building $SHA_TAG"
+          docker build -t $SHA_TAG .
+
+          echo "Pushing $SHA_TAG"
+          docker push $SHA_TAG
+
+          echo "Tagging and pushing $LATEST_TAG"
+          docker tag $SHA_TAG $LATEST_TAG
+          docker push $LATEST_TAG
