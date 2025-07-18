@@ -22,11 +22,14 @@ jobs:
         run: |
           echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > sa.json
 
-      # 3. Install the Cloud SDK so we have `gcloud`
-      - name: Install gcloud SDK
-        uses: google-github-actions/install-gcloud@v1
+      # 3. Install & authenticate gcloud
+      - name: Setup gcloud SDK & authenticate
+        uses: google-github-actions/setup-gcloud@v2
         with:
-          version: 'latest'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          export_default_credentials: true  # makes gcloud auth available to gcloud commands
+
 
 
       # 4. Authenticate and set project
