@@ -36,3 +36,4 @@ terraform.rc
 .DS_Store
 .idea/
 .vscode/
+terraform.tfstate.backup
