@@ -24,14 +24,6 @@ jobs:
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           export_default_credentials: true  # makes gcloud auth available to gcloud commands
 
-
-
-      # 4. Authenticate and set project
-      - name: Authenticate to GCP
-        run: |
-          gcloud auth activate-service-account --key-file=sa.json
-          gcloud config set project "${{ secrets.GCP_PROJECT_ID }}"
-
       # 5. Obtain an access token and do a Docker login
       - name: Docker login to Artifact Registry
         run: |
