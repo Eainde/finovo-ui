@@ -1,18 +1,14 @@
+# ----- Build Stage -----
 FROM node:18 AS build
-
 WORKDIR /app
-
 COPY package.json package-lock.json ./
 RUN npm install
-
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve with Nginx
-FROM nginx:alpine
-
-COPY --from=build /app/build /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# ----- Serve Stage -----
+FROM python:3.11-alpine
+WORKDIR /app
+COPY --from=build /app/build ./build
+EXPOSE 8080
+CMD ["sh", "-c", "echo Starting Python HTTP server on port $PORT && python3 -m http.server $PORT --directory build"]

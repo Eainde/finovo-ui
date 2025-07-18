@@ -40,6 +40,12 @@ jobs:
           SHA_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE_NAME:${{ github.sha }}
           LATEST_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE_NAME:latest
 
+          echo "Building $SHA_TAG"
+          docker build -t $SHA_TAG .
+
+          echo "Pushing $SHA_TAG"
+          docker push $SHA_TAG
+
           echo "Tagging and pushing $LATEST_TAG"
-          docker build -t $LATEST_TAG .
+          docker tag $SHA_TAG $LATEST_TAG
           docker push $LATEST_TAG
