@@ -16,21 +16,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 3. Install & authenticate gcloud
+      # 2. Install & authenticate gcloud
       - name: Setup gcloud SDK & authenticate
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-          export_default_credentials: true  # makes gcloud auth available to gcloud commands
+          export_default_credentials: true
 
-      # 2. Setup Docker authentication for Artifact Registry
+      # 3. Setup Docker authentication for Artifact Registry
       - name: Authenticate and Docker login to Artifact Registry
         run: |
           REGION="${{ secrets.GCP_REGION }}-docker.pkg.dev"
           gcloud auth configure-docker $REGION
 
-      # 6. Build & push your image
+      # 4. Build & push your image
       - name: Build & Push Docker Image
         run: |
           # Define variables
