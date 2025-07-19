@@ -1,62 +1,100 @@
-name: Release Build & Push to GCP
+name: Build, Push & Terraform Deploy
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: read       # for checkout
+  id-token: write      # if you ever want to switch to OIDC for auth
 
 env:
+  # your GCP project + repo settings
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION:     ${{ secrets.GCP_REGION }}
-  REPO:       ${{ secrets.GCP_ARTIFACT_REPOSITORY }}
+  REGION:     ${{ secrets.GCP_REGION }}              # e.g. europe-west1
+  REPO:       ${{ secrets.GCP_ARTIFACT_REPOSITORY }}  # your docker repo name
   IMAGE:      finovo-ui
 
 jobs:
   build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_uri: ${{ steps.build.outputs.image_uri }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP & configure Docker
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id:      ${{ env.PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          HOST="${REGION}-docker.pkg.dev"
+          gcloud auth configure-docker "$HOST" --quiet
+
+      - id: build
+        name: Build & Push Docker Image
+        run: |
+          HOST="${REGION}-docker.pkg.dev"
+          SHA_TAG="$HOST/${PROJECT_ID}/${REPO}/${IMAGE}:${GITHUB_SHA}"
+          LATEST_TAG="$HOST/${PROJECT_ID}/${REPO}/${IMAGE}:latest"
+
+          echo "Building $SHA_TAG"
+          docker build -t "$SHA_TAG" .
+
+          echo "Pushing $SHA_TAG"
+          docker push "$SHA_TAG"
+
+          echo "Tagging and pushing $LATEST_TAG"
+          docker tag "$SHA_TAG" "$LATEST_TAG"
+          docker push "$LATEST_TAG"
+
+          # expose the SHA-specific tag to subsequent jobs
+          echo "image_uri=$SHA_TAG" >> "$GITHUB_OUTPUT"
+
+  terraform:
+    needs: build-and-push
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup gcloud SDK
+      - name: Authenticate to GCP for Terraform
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ env.PROJECT_ID }}
-          export_default_credentials: false
+          project_id:      ${{ env.PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          export_default_credentials: true
 
-      - name: Activate Service Account
-        run: |
-          cat <<EOF > "$HOME/sa-key.json"
-          ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-          EOF
-          gcloud auth activate-service-account --key-file="$HOME/sa-key.json"
-          gcloud config set project "${{ env.PROJECT_ID }}"
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"  # or your pinned version
 
-      - name: Enable IAM Credentials API
-        run: |
-          gcloud services enable iamcredentials.googleapis.com --quiet
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
 
-      - name: Configure Docker Auth
-        run: |
-          HOST="${{ env.REGION }}-docker.pkg.dev"
-          gcloud auth configure-docker "$HOST" --quiet
+      - name: Terraform Plan
+        working-directory: ./terraform
+        env:
+          IMAGE_URI: ${{ needs.build-and-push.outputs.image_uri }}
+        run: terraform plan \
+          -var="image_uri=${IMAGE_URI}" \
+          -out=tfplan
 
-      - name: Build & Push Docker Image
-        run: |
-          HOST="${{ env.REGION }}-docker.pkg.dev"
-          SHA_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${GITHUB_SHA}"
-          LATEST_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:latest"
-
-          echo "Building $SHA_TAG"
-          docker build -t "$SHA_TAG" .
-          echo "Pushing $SHA_TAG"
-          docker push "$SHA_TAG"
-          echo "Tagging and pushing $LATEST_TAG"
-          docker tag "$SHA_TAG" "$LATEST_TAG"
-          docker push "$LATEST_TAG"
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        working-directory: ./terraform
+        env:
+          IMAGE_URI: ${{ needs.build-and-push.outputs.image_uri }}
+        run: terraform apply -auto-approve tfplan
