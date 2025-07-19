@@ -90,7 +90,7 @@ jobs:
 
       - name: Debug what image URI did we get?
         run: |
-          echo "→ "$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ needs.artifactory-build.outputs.image_url }}"
+          echo "→ '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ needs.artifactory-build.outputs.image_url }}'"
 
       - name: Activate gcloud for local‑exec
         run: |
@@ -113,6 +113,7 @@ jobs:
       - name: Terraform Plan
         working-directory: terraform
         run: |
+          HOST="${{ env.REGION }}-docker.pkg.dev"
           terraform plan \
             -input=false \
             -var="project=${{ env.PROJECT_ID }}" \
