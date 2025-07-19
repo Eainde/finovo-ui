@@ -75,6 +75,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug what image URI did we get?
+        run: |
+          echo "→ image_uri = '${{ needs.build-and-push.outputs.image_uri }}'"
+
       - name: Activate gcloud for local‑exec
         run: |
           cat <<EOF > "${HOME}/sa-key.json"
