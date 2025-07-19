@@ -18,6 +18,8 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    outputs:
+      image_uri: ${{ steps.docker.outputs.image_uri }}
 
     steps:
       - name: Checkout code
