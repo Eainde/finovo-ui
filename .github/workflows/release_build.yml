@@ -8,37 +8,42 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read              # for checkout
-  id-token: write             # required by google-github-actions/auth@v1
+  contents: read       # for checkout
+  id-token: write      # required by google‑github‑actions/auth to mint OIDC tokens
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION:     ${{ secrets.GCP_REGION }}              # e.g. europe-west1
+  REPO:       ${{ secrets.GCP_ARTIFACT_REPOSITORY }}  # your Artifact Registry repo
+  IMAGE:      finovo-ui
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    env:
-      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      REGION:     ${{ secrets.GCP_REGION }}              # e.g. europe-west1
-      REPO:       ${{ secrets.GCP_ARTIFACT_REPOSITORY }}  # your docker repo name
-      IMAGE:      finovo-ui
-
     steps:
       # 1. Check out your code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Authenticate to GCP (generates an OIDC token under the hood)
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v1
+      # 2. Authenticate to GCP and get an OAuth2 access token
+      - id: auth
+        name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          token_format: 'access_token'
+          # This outputs steps.auth.outputs.access_token :contentReference[oaicite:0]{index=0}
 
-      # 3. Configure Docker auth for Artifact Registry
-      - name: Configure Docker for Artifact Registry
-        uses: google-github-actions/artifact-registry-auth@v0
+      # 3. Log Docker into Artifact Registry using that token
+      - name: Configure Docker credentials
+        uses: docker/login-action@v2
         with:
-          location:   ${{ env.REGION }}
-          repository: ${{ env.REPO }}
+          registry: ${{ env.REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+          # OAuth2 token login pattern for GAR :contentReference[oaicite:1]{index=1}
 
-      # 4. Build & push your Docker image
+      # 4. Build and push your image
       - name: Build & Push Docker Image
         run: |
           HOST="$REGION-docker.pkg.dev"
