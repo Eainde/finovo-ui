@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
         run: |
           # Define variables
           REGISTRY=${{ secrets.GCP_REGION }}-docker.pkg.dev
-          gcloud auth configure-docker $REGION
+          gcloud auth configure-docker REGISTRY
           
           PROJECT=${{ secrets.GCP_PROJECT_ID }}
           REPO=${{ secrets.GCP_ARTIFACT_REPOSITORY }}
