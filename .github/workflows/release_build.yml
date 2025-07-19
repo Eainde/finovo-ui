@@ -62,28 +62,7 @@ jobs:
           echo "Tagging and pushing $LATEST_TAG"
           docker tag "$SHA_TAG" "$LATEST_TAG"
           docker push "$LATEST_TAG"
-          echo "image_uri=$SHA_TAG" >> "$GITHUB_OUTPUT"
-
-      - name: Dump GITHUB_OUTPUT file
-        run: |
-          echo "----- GITHUB_OUTPUT -----"
-          cat "$GITHUB_OUTPUT"
-          echo "------------------------"
-      - name: Build & Push Docker Image
-        id: docker1
-        run: |
-          echo "image_uri=works" >> $GITHUB_OUTPUT
-
-      - name: Dump GITHUB_OUTPUT file
-        run: |
-          echo "----- GITHUB_OUTPUT -----"
-          cat $GITHUB_OUTPUT
-          echo "------------------------"
-
-      - name: Debug step output
-        run: |
-          echo "Step output: ${{ steps.docker.outputs.image_uri }}"
-
+          echo "image_uri=$SHA_TAG" >> $GITHUB_OUTPUT
 
       - name: Debug what image URI did we get?
         run: |
@@ -102,7 +81,7 @@ jobs:
 
       - name: Debug what image URI did we get?
         run: |
-          echo "→ image_uri = '${{ needs['build-and-push'].outputs.image_uri }}'"
+          echo "→ image_uri = '${{ needs.build-and-push.outputs.image_uri }}'"
 
       - name: Activate gcloud for local‑exec
         run: |
