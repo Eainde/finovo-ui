@@ -90,7 +90,7 @@ jobs:
 
       - name: Debug what image URI did we get?
         run: |
-          echo "→ image_url = '${{ needs.artifactory-build.outputs.image_url }}'"
+          echo "→ "$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ needs.artifactory-build.outputs.image_url }}"
 
       - name: Activate gcloud for local‑exec
         run: |
@@ -117,7 +117,7 @@ jobs:
             -input=false \
             -var="project=${{ env.PROJECT_ID }}" \
             -var="region=${{ env.REGION }}" \
-            -var="image_url=${{ needs.artifactory-build.outputs.image_url }}" \
+            -var="image_url=$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ needs.artifactory-build.outputs.image_url }}" \
             -var="credentials_json=$GOOGLE_CREDENTIALS" \
             -var="deployer_sa_email=$DEPLOY_SA_EMAIL" \
             -out=tfplan
