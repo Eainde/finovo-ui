@@ -66,6 +66,10 @@ jobs:
           # expose the SHA-specific image URI for the next job
           echo "image_uri=$SHA_TAG" >> "$GITHUB_OUTPUT"
 
+      - name: Debug what image URI did we get?
+        run: |
+          echo "→ step output image_uri = '${{ steps.docker.outputs.image_uri }}'"
+
   terraform:
     needs: build-and-push
     runs-on: ubuntu-latest
