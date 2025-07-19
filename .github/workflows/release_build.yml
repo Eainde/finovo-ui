@@ -11,12 +11,18 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
+    # define all of your secrets/consts here
+    env:
+      REGION: ${{ secrets.GCP_REGION }}
+      PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+      REPO: ${{ secrets.GCP_ARTIFACT_REPOSITORY }}
+      IMAGE_NAME: finovo-ui
+      HOST: ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
     steps:
-      # 1. Checkout your code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Install & authenticate gcloud
       - name: Setup gcloud SDK & authenticate
         uses: google-github-actions/setup-gcloud@v2
         with:
@@ -24,27 +30,15 @@ jobs:
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           export_default_credentials: true
 
-      # 3. Configure Docker credential helper
       - name: Configure Docker to use gcloud
         run: |
-          # the “region” part only, e.g. europe-west1
-          REGION=${{ secrets.GCP_REGION }}
-          # full hostname of your Artifact Registry Docker repo
-          REGISTRY_HOST="$REGION-docker.pkg.dev"
+          # this will expand to e.g. "europe-west1-docker.pkg.dev"
+          gcloud auth configure-docker "$HOST" --quiet
 
-          # tell docker to auth pushes/pulls against that host
-          gcloud auth configure-docker $REGISTRY_HOST --quiet
-
-      # 4. Build & push your image
       - name: Build & Push Docker Image
         run: |
-          REGION="${{ secrets.GCP_REGION }}"
-          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
-          REPO="${{ secrets.GCP_ARTIFACT_REPOSITORY }}"
-          IMAGE_NAME="finovo-ui"
-
-          HOST="$REGION-docker.pkg.dev"
-          SHA_TAG="$HOST/$PROJECT/$REPO/$IMAGE_NAME:${{ github.sha }}"
+          # compute the two tags
+          SHA_TAG="$HOST/$PROJECT/$REPO/$IMAGE_NAME:${GITHUB_SHA}"
           LATEST_TAG="$HOST/$PROJECT/$REPO/$IMAGE_NAME:latest"
 
           echo "Building image $SHA_TAG"
