@@ -21,11 +21,6 @@ locals {
   runtime_sa_id    = "projects/${data.google_project.this.project_id}/serviceAccounts/${local.runtime_sa_email}"
 }
 
-# The SA you’re using to deploy (from your GitHub secret)
-data "template_file" "deployer_sa" {
-  template = "${jsondecode(var.credentials_json).client_email}"
-}
-
 resource "google_service_account_iam_member" "run_sa_act_as" {
   service_account_id = local.runtime_sa_id     # full resource name!
   role               = "roles/iam.serviceAccountUser"
@@ -42,10 +37,14 @@ resource "null_resource" "delete_old_run_service" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      # turn off “exit on any error”
+      set +e
       if gcloud run services describe ${var.service_name} \
          --project=${var.project} --region=${var.region} &> /dev/null; then
         gcloud run services delete ${var.service_name} \
           --project=${var.project} --region=${var.region} --quiet
+        else
+          echo "Service ${var.service_name} not found — skipping deletion"
       fi
     EOT
   }
