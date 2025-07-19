@@ -60,17 +60,17 @@ jobs:
         id: docker
         run: |
           HOST="${{ env.REGION }}-docker.pkg.dev"
-          SHA_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${GITHUB_SHA}"
+          IMAGE_URL="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${GITHUB_SHA}"
           LATEST_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:latest"
 
-          echo "Building image_url"
-          docker build -t "image_url" .
-          echo "Pushing image_url"
-          docker push "image_url"
+          echo "Building $IMAGE_URL"
+          docker build -t "$IMAGE_URL" .
+          echo "Pushing $IMAGE_URL"
+          docker push "$IMAGE_URL"
           echo "Tagging and pushing $LATEST_TAG"
-          docker tag "image_url" "$LATEST_TAG"
+          docker tag "$IMAGE_URL" "$LATEST_TAG"
           docker push "$LATEST_TAG"
-          echo "image_url=image_url" >> $GITHUB_OUTPUT
+          echo "image_url=$IMAGE_URL" >> $GITHUB_OUTPUT
 
       - name: Debug what image URI did we get?
         run: |
