@@ -63,6 +63,7 @@ jobs:
           docker tag "$SHA_TAG" "$LATEST_TAG"
           docker push "$LATEST_TAG"
           echo "image_uri=$SHA_TAG" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
 
       - name: Debug what image URI did we get?
         run: |
