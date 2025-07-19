@@ -7,45 +7,52 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-permissions:
-  contents: read            # for checkout
-  id-token: write           # (not needed if you forego auth@v2 below)
-
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION:     ${{ secrets.GCP_REGION }}              # e.g. europe-west1
-  REPO:       ${{ secrets.GCP_ARTIFACT_REPOSITORY }}  # your docker repo name
+  REPO:       ${{ secrets.GCP_ARTIFACT_REPOSITORY }}  # your Artifact Registry repo
   IMAGE:      finovo-ui
+  SA_KEY:     ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Checkout your code
+      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2) Install gcloud and configure it with your SA key
-      - name: Setup gcloud SDK & authenticate
+      # 2. Install gcloud SDK
+      - name: Setup gcloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-          export_default_credentials: true
+          export_default_credentials: false   # we’ll do CLI auth manually
+          install_components:                # ensure services command is available
+            - beta
+            - alpha
 
-      # 3) Enable the IAM Service Account Credentials API
+      # 3. Activate the service account for gcloud CLI
+      - name: Activate Service Account
+        run: |
+          echo "$SA_KEY" > "${HOME}/sa-key.json"
+          gcloud auth activate-service-account \
+            --key-file="${HOME}/sa-key.json"
+          gcloud config set project "$PROJECT_ID"
+
+      # 4. Enable the IAM Service Account Credentials API
       - name: Enable IAM Credentials API
         run: |
           gcloud services enable iamcredentials.googleapis.com --quiet
 
-      # 4) Configure Docker to use gcloud’s credential helper
+      # 5. Configure Docker to use gcloud credential helper
       - name: Configure Docker Auth
         run: |
           HOST="$REGION-docker.pkg.dev"
           gcloud auth configure-docker "$HOST" --quiet
 
-      # 5) Build & push
+      # 6. Build & push your Docker image
       - name: Build & Push Docker Image
         run: |
           HOST="$REGION-docker.pkg.dev"
@@ -54,8 +61,10 @@ jobs:
 
           echo "Building $SHA_TAG"
           docker build -t "$SHA_TAG" .
+
           echo "Pushing $SHA_TAG"
           docker push "$SHA_TAG"
+
           echo "Tagging and pushing $LATEST_TAG"
           docker tag "$SHA_TAG" "$LATEST_TAG"
           docker push "$LATEST_TAG"
