@@ -19,3 +19,7 @@ variable "service_name" {
   type        = string
   default     = "finovo-ui"
 }
+
+variable "image_uri" {
+  type = string
+}
