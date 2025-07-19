@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
   workflow_call:
     outputs:
-      image_uri:
+      image_url:
         description: "The URI of the built Docker image"
-        value: ${{ jobs.artifactory-build.outputs.image_uri }}
+        value: ${{ jobs.artifactory-build.outputs.image_url }}
 
 permissions:
   contents: read
@@ -27,7 +27,7 @@ jobs:
   artifactory-build:
     runs-on: ubuntu-latest
     outputs:
-      image_uri: ${{ steps.docker.outputs.image_uri }}
+      image_url: ${{ steps.docker.outputs.image_url }}
 
     steps:
       - name: Checkout code
@@ -63,18 +63,18 @@ jobs:
           SHA_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${GITHUB_SHA}"
           LATEST_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:latest"
 
-          echo "Building $SHA_TAG"
-          docker build -t "$SHA_TAG" .
-          echo "Pushing $SHA_TAG"
-          docker push "$SHA_TAG"
+          echo "Building image_url"
+          docker build -t "image_url" .
+          echo "Pushing image_url"
+          docker push "image_url"
           echo "Tagging and pushing $LATEST_TAG"
-          docker tag "$SHA_TAG" "$LATEST_TAG"
+          docker tag "image_url" "$LATEST_TAG"
           docker push "$LATEST_TAG"
-          echo "image_uri=$SHA_TAG" >> $GITHUB_OUTPUT
+          echo "image_url=image_url" >> $GITHUB_OUTPUT
 
       - name: Debug what image URI did we get?
         run: |
-          echo "→ step output image_uri = '${{ steps.docker.outputs.image_uri }}'"
+          echo "→ step output image_url = '${{ steps.docker.outputs.image_url }}'"
           cat $GITHUB_OUTPUT
 
   cloud-run-deploy:
@@ -90,7 +90,7 @@ jobs:
 
       - name: Debug what image URI did we get?
         run: |
-          echo "→ image_uri = '${{ needs.artifactory-build.outputs.image_uri }}'"
+          echo "→ image_url = '${{ needs.artifactory-build.outputs.image_url }}'"
 
       - name: Activate gcloud for local‑exec
         run: |
@@ -117,7 +117,7 @@ jobs:
             -input=false \
             -var="project=${{ env.PROJECT_ID }}" \
             -var="region=${{ env.REGION }}" \
-            -var="image_url=${{ needs.artifactory-build.outputs.image_uri }}" \
+            -var="image_url=${{ needs.artifactory-build.outputs.image_url }}" \
             -var="credentials_json=$GOOGLE_CREDENTIALS" \
             -var="deployer_sa_email=$DEPLOY_SA_EMAIL" \
             -out=tfplan
