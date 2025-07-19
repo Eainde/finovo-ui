@@ -67,6 +67,8 @@ jobs:
   terraform:
     needs: build-and-push
     runs-on: ubuntu-latest
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
     steps:
       - name: Checkout code
