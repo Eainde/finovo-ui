@@ -103,7 +103,7 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         working-directory: terraform
-        run:
+        run: |
           terraform apply \
             -input=false \
             -auto-approve tfplan
