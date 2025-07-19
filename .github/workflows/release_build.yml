@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read       # for checkout
+  contents: read
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -20,18 +20,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Check out your code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Install gcloud SDK without ADC (we’ll auth manually)
       - name: Setup gcloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id:              ${{ env.PROJECT_ID }}
+          project_id: ${{ env.PROJECT_ID }}
           export_default_credentials: false
 
-      # 3. Activate the service account for gcloud CLI
       - name: Activate Service Account
         run: |
           cat <<EOF > "${HOME}/sa-key.json"
@@ -41,24 +38,20 @@ jobs:
   --key-file="${HOME}/sa-key.json"
   gcloud config set project "${{ env.PROJECT_ID }}"
 
-# 4. Enable the IAM Service Account Credentials API
 - name: Enable IAM Credentials API
   run: |
     gcloud services enable iamcredentials.googleapis.com --quiet
 
-# 5. Configure Docker to use gcloud’s credential helper
 - name: Configure Docker Auth
   run: |
     HOST="${{ env.REGION }}-docker.pkg.dev"
     gcloud auth configure-docker "$HOST" --quiet
 
-# 6. Build & push your Docker image
 - name: Build & Push Docker Image
   run: |
     HOST="${{ env.REGION }}-docker.pkg.dev"
     SHA_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${GITHUB_SHA}"
     LATEST_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:latest"
-    
     echo "Building $SHA_TAG"
     docker build -t "$SHA_TAG" .
     echo "Pushing $SHA_TAG"
