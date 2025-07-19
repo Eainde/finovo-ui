@@ -3,16 +3,16 @@ name: Release Build & Push to GCP
 on:
   push:
     tags:
-      - 'v*.*.*'       # e.g. v1.2.3
-  workflow_dispatch:
+      - 'v*.*.*'
+  workflow_dispatch: {}
 
 permissions:
   contents: read
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION:     ${{ secrets.GCP_REGION }}              # e.g. europe-west1
-  REPO:       ${{ secrets.GCP_ARTIFACT_REPOSITORY }}  # your Artifact Registry repo
+  REGION:     ${{ secrets.GCP_REGION }}
+  REPO:       ${{ secrets.GCP_ARTIFACT_REPOSITORY }}
   IMAGE:      finovo-ui
 
 jobs:
@@ -31,31 +31,31 @@ jobs:
 
       - name: Activate Service Account
         run: |
-          cat <<EOF > "${HOME}/sa-key.json"
-  ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-  EOF
-  gcloud auth activate-service-account \
-  --key-file="${HOME}/sa-key.json"
-  gcloud config set project "${{ env.PROJECT_ID }}"
+          cat <<EOF > "$HOME/sa-key.json"
+          ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          EOF
+          gcloud auth activate-service-account --key-file="$HOME/sa-key.json"
+          gcloud config set project "${{ env.PROJECT_ID }}"
 
-- name: Enable IAM Credentials API
-  run: |
-    gcloud services enable iamcredentials.googleapis.com --quiet
+      - name: Enable IAM Credentials API
+        run: |
+          gcloud services enable iamcredentials.googleapis.com --quiet
 
-- name: Configure Docker Auth
-  run: |
-    HOST="${{ env.REGION }}-docker.pkg.dev"
-    gcloud auth configure-docker "$HOST" --quiet
+      - name: Configure Docker Auth
+        run: |
+          HOST="${{ env.REGION }}-docker.pkg.dev"
+          gcloud auth configure-docker "$HOST" --quiet
 
-- name: Build & Push Docker Image
-  run: |
-    HOST="${{ env.REGION }}-docker.pkg.dev"
-    SHA_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${GITHUB_SHA}"
-    LATEST_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:latest"
-    echo "Building $SHA_TAG"
-    docker build -t "$SHA_TAG" .
-    echo "Pushing $SHA_TAG"
-    docker push "$SHA_TAG"
-    echo "Tagging and pushing $LATEST_TAG"
-    docker tag "$SHA_TAG" "$LATEST_TAG"
-    docker push "$LATEST_TAG"
+      - name: Build & Push Docker Image
+        run: |
+          HOST="${{ env.REGION }}-docker.pkg.dev"
+          SHA_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${GITHUB_SHA}"
+          LATEST_TAG="$HOST/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:latest"
+
+          echo "Building $SHA_TAG"
+          docker build -t "$SHA_TAG" .
+          echo "Pushing $SHA_TAG"
+          docker push "$SHA_TAG"
+          echo "Tagging and pushing $LATEST_TAG"
+          docker tag "$SHA_TAG" "$LATEST_TAG"
+          docker push "$LATEST_TAG"
