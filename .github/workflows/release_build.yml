@@ -83,7 +83,7 @@ jobs:
 
       - name: Debug what image URI did we get?
         run: |
-          echo "→ image_uri = '${{ needs.build-and-push.outputs.image_uri }}'"
+          echo "→ image_uri = '${{ needs['build-and-push'].outputs.image_uri }}'"
 
       - name: Activate gcloud for local‑exec
         run: |
@@ -110,7 +110,7 @@ jobs:
             -input=false \
             -var="project=${{ env.PROJECT_ID }}" \
             -var="region=${{ env.REGION }}" \
-            -var="image_url=${{ needs.build-and-push.outputs.image_uri }}" \
+            -var="image_url=${{ needs['build-and-push'].outputs.image_uri }}" \
             -var="credentials_json=$GOOGLE_CREDENTIALS" \
             -var="deployer_sa_email=$DEPLOY_SA_EMAIL" \
             -out=tfplan
