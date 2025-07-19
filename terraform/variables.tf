@@ -23,3 +23,7 @@ variable "service_name" {
 variable "credentials_json" {
   type = string
 }
+variable "deployer_sa_email" {
+  description = "The service account email used by CI to deploy (artifact-pusher@...)."
+  type        = string
+}
