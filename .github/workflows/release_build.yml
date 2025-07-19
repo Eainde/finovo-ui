@@ -7,41 +7,45 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read              # for checkout
+  id-token: write             # required by google-github-actions/auth@v1
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
-    # define all of your secrets/consts here
     env:
-      REGION: ${{ secrets.GCP_REGION }}
-      PROJECT: ${{ secrets.GCP_PROJECT_ID }}
-      REPO: ${{ secrets.GCP_ARTIFACT_REPOSITORY }}
-      IMAGE_NAME: finovo-ui
-      HOST: ${{ secrets.GCP_REGION }}-docker.pkg.dev
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION:     ${{ secrets.GCP_REGION }}              # e.g. europe-west1
+      REPO:       ${{ secrets.GCP_ARTIFACT_REPOSITORY }}  # your docker repo name
+      IMAGE:      finovo-ui
 
     steps:
+      # 1. Check out your code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup gcloud SDK & authenticate
-        uses: google-github-actions/setup-gcloud@v2
+      # 2. Authenticate to GCP (generates an OIDC token under the hood)
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-          export_default_credentials: true
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - name: Configure Docker to use gcloud
-        run: |
-          # this will expand to e.g. "europe-west1-docker.pkg.dev"
-          gcloud auth configure-docker "$HOST" --quiet
+      # 3. Configure Docker auth for Artifact Registry
+      - name: Configure Docker for Artifact Registry
+        uses: google-github-actions/artifact-registry-auth@v0
+        with:
+          location:   ${{ env.REGION }}
+          repository: ${{ env.REPO }}
 
+      # 4. Build & push your Docker image
       - name: Build & Push Docker Image
         run: |
-          # compute the two tags
-          SHA_TAG="$HOST/$PROJECT/$REPO/$IMAGE_NAME:${GITHUB_SHA}"
-          LATEST_TAG="$HOST/$PROJECT/$REPO/$IMAGE_NAME:latest"
+          HOST="$REGION-docker.pkg.dev"
+          SHA_TAG="$HOST/$PROJECT_ID/$REPO/$IMAGE:${GITHUB_SHA}"
+          LATEST_TAG="$HOST/$PROJECT_ID/$REPO/$IMAGE:latest"
 
-          echo "Building image $SHA_TAG"
+          echo "Building $SHA_TAG"
           docker build -t "$SHA_TAG" .
 
           echo "Pushing $SHA_TAG"
