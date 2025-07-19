@@ -67,6 +67,7 @@ jobs:
       - name: Debug what image URI did we get?
         run: |
           echo "→ step output image_uri = '${{ steps.docker.outputs.image_uri }}'"
+          cat $GITHUB_OUTPUT
 
   cloud-run-deploy:
     needs: artifactory-build
@@ -83,6 +84,7 @@ jobs:
         run: |
           echo "→ image_uri = '${{ needs.artifactory-build.outputs.image_uri }}'"
           echo "→ image_uri = '${{ steps.docker.outputs.image_uri }}'"
+          cat $GITHUB_OUTPUT
 
       - name: Activate gcloud for local‑exec
         run: |
