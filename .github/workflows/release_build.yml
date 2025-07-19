@@ -72,11 +72,6 @@ jobs:
           docker push "$LATEST_TAG"
           echo "image_url=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
 
-      - name: Debug what image URI did we get?
-        run: |
-          echo "→ step output image_url = '${{ steps.docker.outputs.image_url }}'"
-
-
   cloud-run-deploy:
     needs: artifactory-build
     runs-on: ubuntu-latest
@@ -87,10 +82,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Debug what image URI did we get?
-        run: |
-          echo "→ '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ needs.artifactory-build.outputs.image_url }}'"
 
       - name: Activate gcloud for local‑exec
         run: |
