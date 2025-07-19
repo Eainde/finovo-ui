@@ -112,6 +112,4 @@ jobs:
           terraform apply \
             -input=false \
             -auto-approve \
-            -var="credentials_json=$GOOGLE_CREDENTIALS" \
-            -var="deployer_sa_email=$DEPLOY_SA_EMAIL" \
             tfplan
