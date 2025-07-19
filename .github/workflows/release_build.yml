@@ -16,7 +16,7 @@ env:
   IMAGE:      finovo-ui
 
 jobs:
-  build-and-push:
+  artifactory-build:
     runs-on: ubuntu-latest
     outputs:
       image_uri: ${{ steps.docker.outputs.image_uri }}
@@ -68,8 +68,8 @@ jobs:
         run: |
           echo "→ step output image_uri = '${{ steps.docker.outputs.image_uri }}'"
 
-  terraform:
-    needs: build-and-push
+  cloud-run-deploy:
+    needs: artifactory-build
     runs-on: ubuntu-latest
     env:
       GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
@@ -81,7 +81,8 @@ jobs:
 
       - name: Debug what image URI did we get?
         run: |
-          echo "→ image_uri = '${{ needs.build-and-push.outputs.image_uri }}'"
+          echo "→ image_uri = '${{ needs.artifactory-build.outputs.image_uri }}'"
+          echo "→ image_uri = '${{ steps.docker.outputs.image_uri }}'"
 
       - name: Activate gcloud for local‑exec
         run: |
@@ -108,7 +109,7 @@ jobs:
             -input=false \
             -var="project=${{ env.PROJECT_ID }}" \
             -var="region=${{ env.REGION }}" \
-            -var="image_url=${{ needs['build-and-push'].outputs.image_uri }}" \
+            -var="image_url=${{ needs.artifactory-build.outputs.image_uri }}" \
             -var="credentials_json=$GOOGLE_CREDENTIALS" \
             -var="deployer_sa_email=$DEPLOY_SA_EMAIL" \
             -out=tfplan
