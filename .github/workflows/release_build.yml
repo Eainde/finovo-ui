@@ -69,6 +69,21 @@ jobs:
           echo "----- GITHUB_OUTPUT -----"
           cat "$GITHUB_OUTPUT"
           echo "------------------------"
+      - name: Build & Push Docker Image
+        id: docker1
+        run: |
+          echo "image_uri=works" >> $GITHUB_OUTPUT
+
+      - name: Dump GITHUB_OUTPUT file
+        run: |
+          echo "----- GITHUB_OUTPUT -----"
+          cat $GITHUB_OUTPUT
+          echo "------------------------"
+
+      - name: Debug step output
+        run: |
+          echo "Step output: ${{ steps.docker.outputs.image_uri }}"
+
 
       - name: Debug what image URI did we get?
         run: |
