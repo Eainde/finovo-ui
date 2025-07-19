@@ -8,16 +8,6 @@ provider "google" {
 # Grant your deployer SA the "actAs" right on the Cloud Run runtime SA
 data "google_project" "this" {}
 
-# Compute default runtime SA email (projectNumber-compute@developer.gserviceaccount.com)
-locals {
-  runtime_sa = "${data.google_project.this.number}-compute@developer.gserviceaccount.com"
-}
-
-# The SA you’re using to deploy (from your GitHub secret)
-data "template_file" "deployer_sa" {
-  template = "${jsondecode(var.credentials_json).client_email}"
-}
-
 resource "google_project_service" "run" {
   service = "run.googleapis.com"
 }
