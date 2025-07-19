@@ -20,3 +20,6 @@ variable "service_name" {
   default     = "finovo-ui"
 }
 
+variable "credentials_json" {
+  type = string
+}

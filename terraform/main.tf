@@ -1,7 +1,21 @@
 provider "google" {
 #  credentials = file("/Users/akshaydipta/Downloads/finovo-466315-0e970e92573f.json")
+  credentials = var.credentials_json
   project     = var.project
   region      = var.region
+}
+
+# Grant your deployer SA the "actAs" right on the Cloud Run runtime SA
+data "google_project" "this" {}
+
+# Compute default runtime SA email (projectNumber-compute@developer.gserviceaccount.com)
+locals {
+  runtime_sa = "${data.google_project.this.number}-compute@developer.gserviceaccount.com"
+}
+
+# The SA you’re using to deploy (from your GitHub secret)
+data "template_file" "deployer_sa" {
+  template = "${jsondecode(var.credentials_json).client_email}"
 }
 
 resource "google_project_service" "run" {
@@ -10,6 +24,12 @@ resource "google_project_service" "run" {
 
 resource "google_project_service" "artifact_registry" {
   service = "artifactregistry.googleapis.com"
+}
+
+resource "google_service_account_iam_member" "run_sa_act_as" {
+  service_account_id = "artifact-pusher@finovo-466315.iam.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:artifact-pusher@finovo-466315.iam.gserviceaccount.com"
 }
 
 # this null_resource will delete any existing service before we try to create a new one

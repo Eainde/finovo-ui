@@ -100,6 +100,7 @@ jobs:
             -var="project=${{ env.PROJECT_ID }}" \
             -var="region=${{ env.REGION }}" \
             -var="image_url=${{ needs.build-and-push.outputs.image_uri }}" \
+            -var="credentials_json=$GOOGLE_CREDENTIALS" \
             -out=tfplan
 
       - name: Terraform Apply
@@ -108,4 +109,6 @@ jobs:
         run: |
           terraform apply \
             -input=false \
-            -auto-approve tfplan
+            -auto-approve \
+            -var="credentials_json=$GOOGLE_CREDENTIALS" \
+            tfplan
