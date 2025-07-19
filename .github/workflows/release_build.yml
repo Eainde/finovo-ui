@@ -5,9 +5,17 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch: {}
+  workflow_call:
+    outputs:
+      image_uri:
+        description: "The URI of the built Docker image"
+        value: ${{ jobs.artifactory-build.outputs.image_uri }}
 
 permissions:
   contents: read
+  issues: write
+  id-token: write
+  pull-requests: read
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
