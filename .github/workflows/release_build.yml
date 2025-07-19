@@ -70,12 +70,12 @@ jobs:
           echo "Tagging and pushing $LATEST_TAG"
           docker tag "$IMAGE_URL" "$LATEST_TAG"
           docker push "$LATEST_TAG"
-          echo "image_url=$IMAGE_URL" >> $GITHUB_OUTPUT
+          echo "image_url=$IMAGE_URL" >> "$GITHUB_OUTPUT"
 
       - name: Debug what image URI did we get?
         run: |
           echo "→ step output image_url = '${{ steps.docker.outputs.image_url }}'"
-          cat $GITHUB_OUTPUT
+
 
   cloud-run-deploy:
     needs: artifactory-build
