@@ -17,7 +17,7 @@ resource "google_project_service" "artifact_registry" {
 }
 
 locals {
-  runtime_sa = "artifact-pusher@finovo-466315.iam.gserviceaccount.com"
+  runtime_sa = "${data.google_project.this.number}-compute@developer.gserviceaccount.com"
 }
 
 # The SA you’re using to deploy (from your GitHub secret)
