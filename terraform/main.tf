@@ -58,10 +58,16 @@ resource "google_cloud_run_service" "default" {
             cpu    = "1"
           }
         }
+        startup_probe {
+          initial_delay_seconds = 0
+          timeout_seconds       = 240
+          failure_threshold     = 1
+        }
         ports {
           container_port = 8080
         }
       }
+        service_account_name = "${var.project}.iam.gserviceaccount.com"
     }
   }
 
@@ -69,6 +75,7 @@ resource "google_cloud_run_service" "default" {
     percent         = 100
     latest_revision = true
   }
+    autogenerate_revision_name = true
 }
 
 # Allow unauthenticated invocations (public URL)
