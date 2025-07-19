@@ -37,28 +37,33 @@ resource "null_resource" "delete_old_run_service" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      # turn off “exit on any error”
-      set +e
-      if gcloud run services describe ${var.service_name} \
-         --project=${var.project} --region=${var.region} &> /dev/null; then
-        gcloud run services delete ${var.service_name} \
-          --project=${var.project} --region=${var.region} --quiet
-        else
-          echo "Service ${var.service_name} not found — skipping deletion"
-      fi
+      (
+        # turn off “exit on any error”
+        set +e
+        if gcloud run services describe ${var.service_name} \
+           --project=${var.project} --region=${var.region} &> /dev/null; then
+          gcloud run services delete ${var.service_name} \
+            --project=${var.project} --region=${var.region} --quiet
+          else
+            echo "Service ${var.service_name} not found — skipping deletion"
+        fi
+      ) || true
     EOT
   }
 }
 
 resource "google_cloud_run_service" "default" {
+  name     = var.service_name
+  location = var.region
+
   # force deletion of old service first
   depends_on = [
     null_resource.delete_old_run_service,
     google_project_service.run,
     google_project_service.artifact_registry,
+    google_service_account_iam_member.run_sa_act_as
   ]
-  name     = var.service_name
-  location = var.region
+
 
   template {
     metadata {
@@ -67,6 +72,7 @@ resource "google_cloud_run_service" "default" {
       }
     }
     spec {
+      service_account_name = local.runtime_sa_email
       timeout_seconds = 300
 
       containers {
@@ -86,7 +92,6 @@ resource "google_cloud_run_service" "default" {
           container_port = 8080
         }
       }
-        service_account_name = "${var.project}.iam.gserviceaccount.com"
     }
   }
 
