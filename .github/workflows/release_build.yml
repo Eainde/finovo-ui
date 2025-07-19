@@ -74,12 +74,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup gcloud SDK for local-exec
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id:           ${{ env.PROJECT_ID }}
-          service_account_key:  ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-          export_default_credentials: true
+      - name: Activate gcloud for local‑exec
+        run: |
+          cat <<EOF > "${HOME}/sa-key.json"
+          ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          EOF
+          gcloud auth activate-service-account \
+          --key-file="${HOME}/sa-key.json"
+          gcloud config set project "${{ env.PROJECT_ID }}"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
