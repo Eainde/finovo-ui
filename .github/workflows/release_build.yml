@@ -64,6 +64,12 @@ jobs:
           docker push "$LATEST_TAG"
           echo "image_uri=$SHA_TAG" >> "$GITHUB_OUTPUT"
 
+      - name: Dump GITHUB_OUTPUT file
+        run: |
+          echo "----- GITHUB_OUTPUT -----"
+          cat "$GITHUB_OUTPUT"
+          echo "------------------------"
+
       - name: Debug what image URI did we get?
         run: |
           echo "→ step output image_uri = '${{ steps.docker.outputs.image_uri }}'"
