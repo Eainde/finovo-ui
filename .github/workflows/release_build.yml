@@ -102,7 +102,7 @@ jobs:
             -var="region=${{ env.REGION }}" \
             -var="image_url=${{ needs.build-and-push.outputs.image_uri }}" \
             -var="credentials_json=$GOOGLE_CREDENTIALS" \
-            -var="deployer_sa_email=$(jq -r .client_email <<< \"$GOOGLE_CREDENTIALS\")" \
+            -var="deployer_sa_email=$DEPLOY_SA_EMAIL" \
             -out=tfplan
 
       - name: Terraform Apply
@@ -113,5 +113,5 @@ jobs:
             -input=false \
             -auto-approve \
             -var="credentials_json=$GOOGLE_CREDENTIALS" \
-            -var="deployer_sa_email=$(jq -r .client_email <<< \"$GOOGLE_CREDENTIALS\")" \
+            -var="deployer_sa_email=$DEPLOY_SA_EMAIL" \
             tfplan
