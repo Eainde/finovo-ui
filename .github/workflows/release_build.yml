@@ -38,25 +38,21 @@ jobs:
       # 4. Build & push your image
       - name: Build & Push Docker Image
         run: |
-          REGION=${{ secrets.GCP_REGION }}
-          PROJECT=${{ secrets.GCP_PROJECT_ID }}
-          REPO=${{ secrets.GCP_ARTIFACT_REPOSITORY }}
-          IMAGE_NAME=finovo-ui
-          
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT="${{ secrets.GCP_PROJECT_ID }}"
+          REPO="${{ secrets.GCP_ARTIFACT_REPOSITORY }}"
+          IMAGE_NAME="finovo-ui"
+
           HOST="$REGION-docker.pkg.dev"
           SHA_TAG="$HOST/$PROJECT/$REPO/$IMAGE_NAME:${{ github.sha }}"
-          LATEST_TAG="$HOST/$PROJECT/$REPO/$IMAGE_NAME:latest
-
-          # Full image references
-          SHA_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE_NAME:${{ github.sha }}
-          LATEST_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE_NAME:latest
+          LATEST_TAG="$HOST/$PROJECT/$REPO/$IMAGE_NAME:latest"
 
           echo "Building image $SHA_TAG"
-          docker build -t $SHA_TAG .
+          docker build -t "$SHA_TAG" .
 
           echo "Pushing $SHA_TAG"
-          docker push $SHA_TAG
+          docker push "$SHA_TAG"
 
           echo "Tagging and pushing $LATEST_TAG"
-          docker tag $SHA_TAG $LATEST_TAG
-          docker push $LATEST_TAG
+          docker tag "$SHA_TAG" "$LATEST_TAG"
+          docker push "$LATEST_TAG"
