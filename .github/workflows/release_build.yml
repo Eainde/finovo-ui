@@ -24,23 +24,34 @@ jobs:
           service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           export_default_credentials: true
 
+      # 3. Configure Docker credential helper
+      - name: Configure Docker to use gcloud
+        run: |
+          # the “region” part only, e.g. europe-west1
+          REGION=${{ secrets.GCP_REGION }}
+          # full hostname of your Artifact Registry Docker repo
+          REGISTRY_HOST="$REGION-docker.pkg.dev"
+
+          # tell docker to auth pushes/pulls against that host
+          gcloud auth configure-docker $REGISTRY_HOST --quiet
 
       # 4. Build & push your image
       - name: Build & Push Docker Image
         run: |
-          # Define variables
-          REGISTRY=${{ secrets.GCP_REGION }}-docker.pkg.dev
-          gcloud auth configure-docker REGISTRY
-          
+          REGION=${{ secrets.GCP_REGION }}
           PROJECT=${{ secrets.GCP_PROJECT_ID }}
           REPO=${{ secrets.GCP_ARTIFACT_REPOSITORY }}
           IMAGE_NAME=finovo-ui
+          
+          HOST="$REGION-docker.pkg.dev"
+          SHA_TAG="$HOST/$PROJECT/$REPO/$IMAGE_NAME:${{ github.sha }}"
+          LATEST_TAG="$HOST/$PROJECT/$REPO/$IMAGE_NAME:latest
 
           # Full image references
           SHA_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE_NAME:${{ github.sha }}
           LATEST_TAG=$REGISTRY/$PROJECT/$REPO/$IMAGE_NAME:latest
 
-          echo "Building $SHA_TAG"
+          echo "Building image $SHA_TAG"
           docker build -t $SHA_TAG .
 
           echo "Pushing $SHA_TAG"
