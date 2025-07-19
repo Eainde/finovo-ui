@@ -69,8 +69,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-      PROJECT_ID: ${{ env.PROJECT_ID }}
-      REGION: ${{ env.REGION }}
 
     steps:
       - name: Checkout code
