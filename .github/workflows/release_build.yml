@@ -2,8 +2,9 @@ name: Release Build & Push to GCP
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch: {}
 
 permissions:
