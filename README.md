@@ -1,4 +1,4 @@
-# Gig Finance UI
+# Finovo UI
 - npm install
 - npm install --save react-scripts   
 - npm start
