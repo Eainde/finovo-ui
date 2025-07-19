@@ -1,5 +1,4 @@
 name: Release Build & Push to GCP
-
 on:
   push:
     branches: [ main ]
@@ -93,10 +92,14 @@ jobs:
         working-directory: terraform
         run: |
           terraform plan \
-            -var="image_uri=${{ needs.build-and-push.outputs.image_uri }}" \
+            - input=false \
+            -var="image_url=${{ needs.build-and-push.outputs.image_uri }}" \
             -out=tfplan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         working-directory: terraform
-        run: terraform apply -auto-approve tfplan
+        run:
+          terraform apply \
+            -input=false \
+            -auto-approve tfplan
