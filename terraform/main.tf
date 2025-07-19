@@ -16,10 +16,19 @@ resource "google_project_service" "artifact_registry" {
   service = "artifactregistry.googleapis.com"
 }
 
+locals {
+  runtime_sa = "${data.google_project.this.number}-compute@developer.gserviceaccount.com"
+}
+
+# The SA you’re using to deploy (from your GitHub secret)
+data "template_file" "deployer_sa" {
+  template = "${jsondecode(var.credentials_json).client_email}"
+}
+
 resource "google_service_account_iam_member" "run_sa_act_as" {
-  service_account_id = "artifact-pusher@finovo-466315.iam.gserviceaccount.com"
+  service_account_id = local.runtime_sa
   role               = "roles/iam.serviceAccountUser"
-  member             = "serviceAccount:artifact-pusher@finovo-466315.iam.gserviceaccount.com"
+  member             = "serviceAccount:${data.template_file.deployer_sa.rendered}"
 }
 
 # this null_resource will delete any existing service before we try to create a new one
