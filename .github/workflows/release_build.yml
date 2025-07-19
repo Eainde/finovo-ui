@@ -69,12 +69,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      PROJECT_ID: ${{ env.PROJECT_ID }}
+      REGION: ${{ env.REGION }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup gcloud SDK for Terraform
+      - name: Setup gcloud SDK for local-exec
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id:           ${{ env.PROJECT_ID }}
