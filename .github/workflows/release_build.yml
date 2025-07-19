@@ -4,7 +4,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch: {}
+  workflow_dispatch:
   workflow_call:
     outputs:
       image_uri:
@@ -70,7 +70,7 @@ jobs:
           echo "Tagging and pushing $LATEST_TAG"
           docker tag "$SHA_TAG" "$LATEST_TAG"
           docker push "$LATEST_TAG"
-          echo "image_uri=$SHA_TAG" >> $GITHUB_ENV
+          echo "image_uri=$SHA_TAG" >> $GITHUB_OUTPUT
 
       - name: Debug what image URI did we get?
         run: |
@@ -91,8 +91,6 @@ jobs:
       - name: Debug what image URI did we get?
         run: |
           echo "→ image_uri = '${{ needs.artifactory-build.outputs.image_uri }}'"
-          echo "→ image_uri = '${{ steps.docker.outputs.image_uri }}'"
-          echo "Image URI from env: $IMAGE_URI"
 
       - name: Activate gcloud for local‑exec
         run: |
