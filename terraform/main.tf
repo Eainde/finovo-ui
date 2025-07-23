@@ -77,6 +77,10 @@ resource "google_cloud_run_service" "default" {
 
       containers {
         image = var.image_url
+        env {
+          name  = "REACT_APP_API_BASE_URL"
+          value = var.api_base_url
+        }
         resources {
           limits = {
             memory = "512Mi"

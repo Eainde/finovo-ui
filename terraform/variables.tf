@@ -27,3 +27,9 @@ variable "deployer_sa_email" {
   description = "The service account email used by CI to deploy (artifact-pusher@...)."
   type        = string
 }
+
+variable "api_base_url" {
+  description = "The base URL for the backend API for the production UI."
+  type        = string
+  default     = "https://finovo-service-817923714803.europe-west2.run.app"
+}
