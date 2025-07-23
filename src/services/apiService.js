@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create an Axios instance with a base URL from environment or default
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080',
+  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8443',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -10,7 +10,7 @@ const api = axios.create({
 
 // Authentication
 export const login = (email, password) => {
-  return api.post('/login/', { email, password });
+  return api.post('/login', { email, password });
 };
 
 export const logout = () => {

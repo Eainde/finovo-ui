@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import FinovoLogo from '../assets/finovo_logo_black.png';
 import { User, Lock, Mail } from 'lucide-react';
+import { login } from '../services/apiService';
 
 export default function LoginPage({ onLogin, switchToRegister }) {
   const [email, setEmail] = useState('');
@@ -9,18 +10,29 @@ export default function LoginPage({ onLogin, switchToRegister }) {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+       e.preventDefault();
     if (!email || !password) {
-      setError('Please enter both email and password');
+      setError('Please enter both email and password.');
       return;
     }
+    
     setError('');
     setLoading(true);
+
     try {
-      onLogin({ email });
-    } catch {
-      setError('Login failed. Please try again.');
+  
+      const response = await login(email, password);
+      console.log(response);
+      console.log(response.data);
+      onLogin(response.data);
+
+    } catch (err) {
+      // Axios provides detailed error objects. The server's error response
+      // is usually in err.response.data. We fall back to other error messages if that's not present.
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
+      setError(errorMessage);
     } finally {
+      // This will run after the try/catch block, ensuring loading is always set to false.
       setLoading(false);
     }
   };
